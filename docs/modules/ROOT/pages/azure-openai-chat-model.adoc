@@ -109,6 +109,22 @@ If you set `quarkus.langchain4j.azure-openai.endpoint` explicitly, it must point
 
 Image and audio transcription models keep using the deployment-based endpoints.
 
+== Structured outputs
+
+To have the model answer with JSON that follows a schema, set the response format to `json_schema`:
+
+[source,properties,subs=attributes+]
+----
+quarkus.langchain4j.azure-openai.chat-model.response-format=json_schema
+quarkus.langchain4j.azure-openai.chat-model.strict-json-schema=true
+----
+
+An AI service method returning a POJO then sends the JSON schema of that POJO with the request, instead of adding format instructions to the prompt.
+With `strict-json-schema=true`, the model is required to follow the schema exactly.
+The schema of a `ChatRequest` built by hand, set with `responseFormat(...)`, is sent too.
+
+Structured outputs require a model and an API version that support them, see https://learn.microsoft.com/azure/ai-foundry/openai/how-to/structured-outputs[the Azure OpenAI documentation].
+
 == Advanced usage
 
 Please refer to https://docs.quarkiverse.io/quarkus-langchain4j/dev/openai-chat-model.html#_advanced_usage[Open AI].

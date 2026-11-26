@@ -3,6 +3,7 @@ package io.quarkiverse.langchain4j.azure.openai;
 import static dev.langchain4j.internal.Utils.getOrDefault;
 import static dev.langchain4j.internal.Utils.isNullOrEmpty;
 import static dev.langchain4j.internal.ValidationUtils.ensureNotBlank;
+import static dev.langchain4j.model.chat.Capability.RESPONSE_FORMAT_JSON_SCHEMA;
 import static dev.langchain4j.model.openai.internal.OpenAiUtils.toFunctions;
 import static dev.langchain4j.model.openai.internal.OpenAiUtils.toOpenAiMessages;
 import static dev.langchain4j.model.openai.internal.OpenAiUtils.toTools;
@@ -13,13 +14,14 @@ import java.net.Proxy;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
+import java.util.Set;
 
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.model.ModelProvider;
 import dev.langchain4j.model.StreamingResponseHandler;
 import dev.langchain4j.model.TokenCountEstimator;
+import dev.langchain4j.model.chat.Capability;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.chat.request.ChatRequest;
@@ -31,8 +33,6 @@ import dev.langchain4j.model.openai.internal.chat.ChatCompletionChoice;
 import dev.langchain4j.model.openai.internal.chat.ChatCompletionRequest;
 import dev.langchain4j.model.openai.internal.chat.ChatCompletionResponse;
 import dev.langchain4j.model.openai.internal.chat.Delta;
-import dev.langchain4j.model.openai.internal.chat.ResponseFormat;
-import dev.langchain4j.model.openai.internal.chat.ResponseFormatType;
 import io.quarkiverse.langchain4j.openai.common.QuarkusOpenAiClient;
 
 /**
@@ -72,7 +72,8 @@ public class AzureOpenAiStreamingChatModel implements StreamingChatModel {
     private final Double presencePenalty;
     private final Double frequencyPenalty;
     private final TokenCountEstimator tokenizer;
-    private final ResponseFormat responseFormat;
+    private final String responseFormat;
+    private final boolean strictJsonSchema;
     private final List<ChatModelListener> listeners;
     private final ChatRequestParameters defaultRequestParameters;
 
@@ -91,6 +92,7 @@ public class AzureOpenAiStreamingChatModel implements StreamingChatModel {
             Duration timeout,
             Proxy proxy,
             String responseFormat,
+            Boolean strictJsonSchema,
             Boolean logRequests,
             Boolean logResponses,
             Boolean logCurl,
@@ -124,10 +126,8 @@ public class AzureOpenAiStreamingChatModel implements StreamingChatModel {
         this.presencePenalty = presencePenalty;
         this.frequencyPenalty = frequencyPenalty;
         this.tokenizer = tokenizer;
-        this.responseFormat = responseFormat == null ? null
-                : ResponseFormat.builder()
-                        .type(ResponseFormatType.valueOf(responseFormat.toUpperCase(Locale.ROOT)))
-                        .build();
+        this.responseFormat = AzureOpenAiResponseFormats.validate(responseFormat);
+        this.strictJsonSchema = getOrDefault(strictJsonSchema, false);
         this.defaultRequestParameters = ChatRequestParameters.builder()
                 .modelName(modelName)
                 .temperature(temperature)
@@ -135,6 +135,7 @@ public class AzureOpenAiStreamingChatModel implements StreamingChatModel {
                 .maxOutputTokens(maxTokens)
                 .presencePenalty(presencePenalty)
                 .frequencyPenalty(frequencyPenalty)
+                .responseFormat(AzureOpenAiResponseFormats.defaultResponseFormat(this.responseFormat))
                 .build();
     }
 
@@ -155,6 +156,16 @@ public class AzureOpenAiStreamingChatModel implements StreamingChatModel {
     @Override
     public ChatRequestParameters defaultRequestParameters() {
         return defaultRequestParameters;
+    }
+
+    /**
+     * Reports {@code RESPONSE_FORMAT_JSON_SCHEMA} when {@code response-format} is {@code json_schema}, so that AI
+     * services returning a POJO send its JSON schema instead of adding format instructions to the prompt.
+     */
+    @Override
+    public Set<Capability> supportedCapabilities() {
+        return AzureOpenAiResponseFormats.supportsJsonSchema(responseFormat) ? Set.of(RESPONSE_FORMAT_JSON_SCHEMA)
+                : Set.of();
     }
 
     @Override
@@ -187,7 +198,8 @@ public class AzureOpenAiStreamingChatModel implements StreamingChatModel {
                 .reasoningEffort(reasoningEffort)
                 .presencePenalty(getOrDefault(parameters.presencePenalty(), presencePenalty))
                 .frequencyPenalty(getOrDefault(parameters.frequencyPenalty(), frequencyPenalty))
-                .responseFormat(responseFormat);
+                .responseFormat(AzureOpenAiResponseFormats.toOpenAiResponseFormat(parameters.responseFormat(),
+                        strictJsonSchema));
 
         if (usesV1Endpoint()) {
             // v1 endpoints have no deployment in the URL, so the deployment is selected through the model
@@ -282,6 +294,7 @@ public class AzureOpenAiStreamingChatModel implements StreamingChatModel {
         private Duration timeout;
         private Proxy proxy;
         private String responseFormat;
+        private Boolean strictJsonSchema;
         private Boolean logRequests;
         private Boolean logResponses;
         private Boolean logCurl;
@@ -382,6 +395,11 @@ public class AzureOpenAiStreamingChatModel implements StreamingChatModel {
             return this;
         }
 
+        public Builder strictJsonSchema(Boolean strictJsonSchema) {
+            this.strictJsonSchema = strictJsonSchema;
+            return this;
+        }
+
         public Builder logRequests(Boolean logRequests) {
             this.logRequests = logRequests;
             return this;
@@ -423,6 +441,7 @@ public class AzureOpenAiStreamingChatModel implements StreamingChatModel {
                     timeout,
                     proxy,
                     responseFormat,
+                    strictJsonSchema,
                     logRequests,
                     logResponses,
                     logCurl,

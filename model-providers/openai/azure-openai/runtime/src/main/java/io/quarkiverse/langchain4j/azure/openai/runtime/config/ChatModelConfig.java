@@ -127,8 +127,15 @@ public interface ChatModelConfig {
     Optional<Boolean> logResponses();
 
     /**
-     * The response format the model should use.
+     * The response format the model should use: {@code text}, {@code json_object} or {@code json_schema}.
+     * With {@code json_schema}, AI services returning a POJO send its JSON schema to the model (Structured Outputs).
      * Some models are not compatible with some response formats, make sure to review OpenAI documentation.
      */
     Optional<String> responseFormat();
+
+    /**
+     * Whether responses follow JSON Schema for Structured Outputs
+     */
+    @ConfigDocDefault("false")
+    Optional<Boolean> strictJsonSchema();
 }

@@ -105,7 +105,8 @@ public class AzureOpenAiRecorder {
                     .reasoningEffort(chatModelConfig.reasoningEffort().orElse(null))
                     .presencePenalty(chatModelConfig.presencePenalty())
                     .frequencyPenalty(chatModelConfig.frequencyPenalty())
-                    .responseFormat(chatModelConfig.responseFormat().orElse(null));
+                    .responseFormat(chatModelConfig.responseFormat().orElse(null))
+                    .strictJsonSchema(chatModelConfig.strictJsonSchema().orElse(null));
 
             azureAiConfig.proxyHost().ifPresent(host -> {
                 builder.proxy(new Proxy(
@@ -169,7 +170,8 @@ public class AzureOpenAiRecorder {
                     .reasoningEffort(chatModelConfig.reasoningEffort().orElse(null))
                     .presencePenalty(chatModelConfig.presencePenalty())
                     .frequencyPenalty(chatModelConfig.frequencyPenalty())
-                    .responseFormat(chatModelConfig.responseFormat().orElse(null));
+                    .responseFormat(chatModelConfig.responseFormat().orElse(null))
+                    .strictJsonSchema(chatModelConfig.strictJsonSchema().orElse(null));
 
             azureAiConfig.proxyHost().ifPresent(host -> {
                 builder.proxy(new Proxy(

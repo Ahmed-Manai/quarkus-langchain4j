@@ -378,6 +378,11 @@ class AzureOpenAiRecorderEndpointTests {
                 }
 
                 @Override
+                public Optional<Boolean> strictJsonSchema() {
+                    return Optional.empty();
+                }
+
+                @Override
                 public Optional<Boolean> logRequests() {
                     return Optional.empty();
                 }
