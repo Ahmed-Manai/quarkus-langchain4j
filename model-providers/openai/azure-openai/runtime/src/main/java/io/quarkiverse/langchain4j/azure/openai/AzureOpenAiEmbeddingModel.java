@@ -76,6 +76,23 @@ public class AzureOpenAiEmbeddingModel implements EmbeddingModel {
             Boolean logResponses,
             String configName,
             String modelName) {
+        this(endpoint, apiVersion, apiKey, adToken, tokenizer, timeout, maxRetries, proxy, null, logRequests,
+                logResponses, configName, modelName);
+    }
+
+    public AzureOpenAiEmbeddingModel(String endpoint,
+            String apiVersion,
+            String apiKey,
+            String adToken,
+            TokenCountEstimator tokenizer,
+            Duration timeout,
+            Integer maxRetries,
+            Proxy proxy,
+            String tlsConfigurationName,
+            Boolean logRequests,
+            Boolean logResponses,
+            String configName,
+            String modelName) {
 
         // v1 endpoints are not versioned and have no deployment in the URL, so the deployment is selected through the model
         this.requestModel = apiVersion == null ? modelName : null;
@@ -92,6 +109,7 @@ public class AzureOpenAiEmbeddingModel implements EmbeddingModel {
                 .readTimeout(timeout)
                 .writeTimeout(timeout)
                 .proxy(proxy)
+                .tlsConfigurationName(tlsConfigurationName)
                 .logRequests(logRequests)
                 .logResponses(logResponses)
                 .userAgent(DEFAULT_USER_AGENT)
@@ -162,6 +180,7 @@ public class AzureOpenAiEmbeddingModel implements EmbeddingModel {
         private Duration timeout;
         private Integer maxRetries;
         private Proxy proxy;
+        private String tlsConfigurationName;
         private Boolean logRequests;
         private Boolean logResponses;
         private String adToken;
@@ -227,6 +246,17 @@ public class AzureOpenAiEmbeddingModel implements EmbeddingModel {
             return this;
         }
 
+        /**
+         * Sets the name of the TLS configuration, from the Quarkus TLS registry, to use for the connection.
+         *
+         * @param tlsConfigurationName The name of the TLS configuration.
+         * @return builder
+         */
+        public Builder tlsConfigurationName(String tlsConfigurationName) {
+            this.tlsConfigurationName = tlsConfigurationName;
+            return this;
+        }
+
         public Builder logRequests(Boolean logRequests) {
             this.logRequests = logRequests;
             return this;
@@ -263,6 +293,7 @@ public class AzureOpenAiEmbeddingModel implements EmbeddingModel {
                     timeout,
                     maxRetries,
                     proxy,
+                    tlsConfigurationName,
                     logRequests,
                     logResponses,
                     configName,

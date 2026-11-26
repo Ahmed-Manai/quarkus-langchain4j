@@ -19,6 +19,8 @@ import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.util.TypeLiteral;
 
+import org.jboss.logging.Logger;
+
 import dev.langchain4j.model.audio.AudioTranscriptionModel;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.DisabledChatModel;
@@ -44,6 +46,8 @@ import io.quarkiverse.langchain4j.openai.common.QuarkusOpenAiClient;
 import io.quarkiverse.langchain4j.openai.common.runtime.AdditionalPropertiesHack;
 import io.quarkiverse.langchain4j.runtime.NamedConfigUtil;
 import io.quarkus.arc.SyntheticCreationalContext;
+import io.quarkus.proxy.ProxyConfiguration;
+import io.quarkus.proxy.ProxyConfigurationRegistry;
 import io.quarkus.runtime.RuntimeValue;
 import io.quarkus.runtime.ShutdownContext;
 import io.quarkus.runtime.annotations.Recorder;
@@ -52,6 +56,8 @@ import io.smallrye.config.ConfigValidationException.Problem;
 
 @Recorder
 public class AzureOpenAiRecorder {
+
+    private static final Logger log = Logger.getLogger(AzureOpenAiRecorder.class);
 
     static final String AZURE_ENDPOINT_URL_PATTERN = "https://%s.%s/openai/deployments/%s";
     static final String AZURE_V1_ENDPOINT_URL_PATTERN = "https://%s.%s/openai/v1";
@@ -88,6 +94,7 @@ public class AzureOpenAiRecorder {
             var adToken = firstOrDefault(null, chatModelConfig.adToken(), azureAiConfig.adToken());
             var builder = AzureOpenAiChatModel.builder()
                     .endpoint(getEndpoint(azureAiConfig, configName, EndpointType.CHAT))
+                    .tlsConfigurationName(azureAiConfig.tlsConfigurationName().orElse(null))
                     .configName(NamedConfigUtil.isDefault(configName) ? null : configName)
                     .apiKey(apiKey)
                     .adToken(adToken)
@@ -107,11 +114,6 @@ public class AzureOpenAiRecorder {
                     .frequencyPenalty(chatModelConfig.frequencyPenalty())
                     .responseFormat(chatModelConfig.responseFormat().orElse(null));
 
-            azureAiConfig.proxyHost().ifPresent(host -> {
-                builder.proxy(new Proxy(
-                        Type.valueOf(azureAiConfig.proxyType()),
-                        new InetSocketAddress(host, azureAiConfig.proxyPort())));
-            });
             if (chatModelConfig.maxTokens().isPresent()) {
                 builder.maxTokens(chatModelConfig.maxTokens().get());
             }
@@ -125,6 +127,11 @@ public class AzureOpenAiRecorder {
                 public ChatModel apply(SyntheticCreationalContext<ChatModel> context) {
                     throwIfApiKeysNotConfigured(apiKey, adToken, isAuthProviderAvailable(context, configName),
                             configName);
+                    Optional<Proxy> proxy = resolveProxy(azureAiConfig,
+                            context.getInjectedReference(ProxyConfigurationRegistry.class));
+                    if (proxy.isPresent()) {
+                        builder.proxy(proxy.get());
+                    }
 
                     builder.listeners(context.getInjectedReference(CHAT_MODEL_LISTENER_TYPE_LITERAL).stream()
                             .collect(Collectors.toList()));
@@ -155,6 +162,7 @@ public class AzureOpenAiRecorder {
 
             var builder = AzureOpenAiStreamingChatModel.builder()
                     .endpoint(getEndpoint(azureAiConfig, configName, EndpointType.CHAT))
+                    .tlsConfigurationName(azureAiConfig.tlsConfigurationName().orElse(null))
                     .apiKey(apiKey)
                     .adToken(adToken)
                     .modelName(azureAiConfig.deploymentNameFor(EndpointType.CHAT).orElse(null))
@@ -171,12 +179,6 @@ public class AzureOpenAiRecorder {
                     .frequencyPenalty(chatModelConfig.frequencyPenalty())
                     .responseFormat(chatModelConfig.responseFormat().orElse(null));
 
-            azureAiConfig.proxyHost().ifPresent(host -> {
-                builder.proxy(new Proxy(
-                        Type.valueOf(azureAiConfig.proxyType()),
-                        new InetSocketAddress(host, azureAiConfig.proxyPort())));
-            });
-
             if (chatModelConfig.maxTokens().isPresent()) {
                 builder.maxTokens(chatModelConfig.maxTokens().get());
             }
@@ -186,6 +188,11 @@ public class AzureOpenAiRecorder {
                 public StreamingChatModel apply(SyntheticCreationalContext<StreamingChatModel> context) {
                     throwIfApiKeysNotConfigured(apiKey, adToken, isAuthProviderAvailable(context, configName),
                             configName);
+                    Optional<Proxy> proxy = resolveProxy(azureAiConfig,
+                            context.getInjectedReference(ProxyConfigurationRegistry.class));
+                    if (proxy.isPresent()) {
+                        builder.proxy(proxy.get());
+                    }
                     builder.listeners(context.getInjectedReference(CHAT_MODEL_LISTENER_TYPE_LITERAL).stream()
                             .collect(Collectors.toList()));
                     ModelBuilderCustomizer.applyCustomizers(
@@ -215,6 +222,7 @@ public class AzureOpenAiRecorder {
             var adToken = firstOrDefault(null, embeddingModelConfig.adToken(), azureAiConfig.adToken());
             var builder = AzureOpenAiEmbeddingModel.builder()
                     .endpoint(getEndpoint(azureAiConfig, configName, EndpointType.EMBEDDING))
+                    .tlsConfigurationName(azureAiConfig.tlsConfigurationName().orElse(null))
                     .apiKey(apiKey)
                     .adToken(adToken)
                     .configName(NamedConfigUtil.isDefault(configName) ? null : configName)
@@ -226,17 +234,16 @@ public class AzureOpenAiRecorder {
                     .logRequests(firstOrDefault(false, embeddingModelConfig.logRequests(), azureAiConfig.logRequests()))
                     .logResponses(firstOrDefault(false, embeddingModelConfig.logResponses(), azureAiConfig.logResponses()));
 
-            azureAiConfig.proxyHost().ifPresent(host -> {
-                builder.proxy(new Proxy(
-                        Type.valueOf(azureAiConfig.proxyType()),
-                        new InetSocketAddress(host, azureAiConfig.proxyPort())));
-            });
-
             return new Function<>() {
                 @Override
                 public EmbeddingModel apply(SyntheticCreationalContext<EmbeddingModel> context) {
                     throwIfApiKeysNotConfigured(apiKey, adToken, isAuthProviderAvailable(context, configName),
                             configName);
+                    Optional<Proxy> proxy = resolveProxy(azureAiConfig,
+                            context.getInjectedReference(ProxyConfigurationRegistry.class));
+                    if (proxy.isPresent()) {
+                        builder.proxy(proxy.get());
+                    }
                     ModelBuilderCustomizer.applyCustomizers(
                             context.getInjectedReference(EMBEDDING_MODEL_CUSTOMIZER_TYPE_LITERAL, Any.Literal.INSTANCE),
                             builder, configName);
@@ -263,6 +270,7 @@ public class AzureOpenAiRecorder {
             var adToken = firstOrDefault(null, imageModelConfig.adToken(), azureAiConfig.adToken());
             var builder = AzureOpenAiImageModel.builder()
                     .endpoint(getEndpoint(azureAiConfig, configName, EndpointType.IMAGE))
+                    .tlsConfigurationName(azureAiConfig.tlsConfigurationName().orElse(null))
                     .apiKey(apiKey)
                     .adToken(adToken)
                     .apiVersion(imageModelConfig.apiVersion().orElse(azureAiConfig.apiVersion()))
@@ -302,6 +310,11 @@ public class AzureOpenAiRecorder {
                 public ImageModel apply(SyntheticCreationalContext<ImageModel> context) {
                     throwIfApiKeysNotConfigured(apiKey, adToken, isAuthProviderAvailable(context, configName),
                             configName);
+                    Optional<Proxy> proxy = resolveProxy(azureAiConfig,
+                            context.getInjectedReference(ProxyConfigurationRegistry.class));
+                    if (proxy.isPresent()) {
+                        builder.proxy(proxy.get());
+                    }
                     ModelBuilderCustomizer.applyCustomizers(
                             context.getInjectedReference(IMAGE_MODEL_CUSTOMIZER_TYPE_LITERAL, Any.Literal.INSTANCE),
                             builder, configName);
@@ -329,6 +342,7 @@ public class AzureOpenAiRecorder {
             var adToken = firstOrDefault(null, audioTranscriptionModelConfig.adToken(), azureAiConfig.adToken());
             var builder = AzureOpenAiAudioTranscriptionModel.builder()
                     .endpoint(getEndpoint(azureAiConfig, configName, EndpointType.AUDIO_TRANSCRIPTION))
+                    .tlsConfigurationName(azureAiConfig.tlsConfigurationName().orElse(null))
                     .apiKey(apiKey)
                     .adToken(adToken)
                     .apiVersion(audioTranscriptionModelConfig.apiVersion().orElse(azureAiConfig.apiVersion()))
@@ -347,6 +361,11 @@ public class AzureOpenAiRecorder {
                 public AudioTranscriptionModel apply(SyntheticCreationalContext<AudioTranscriptionModel> context) {
                     throwIfApiKeysNotConfigured(apiKey, adToken, isAuthProviderAvailable(context, configName),
                             configName);
+                    Optional<Proxy> proxy = resolveProxy(azureAiConfig,
+                            context.getInjectedReference(ProxyConfigurationRegistry.class));
+                    if (proxy.isPresent()) {
+                        builder.proxy(proxy.get());
+                    }
                     ModelBuilderCustomizer.applyCustomizers(
                             context.getInjectedReference(AUDIO_TRANSCRIPTION_MODEL_CUSTOMIZER_TYPE_LITERAL,
                                     Any.Literal.INSTANCE),
@@ -362,6 +381,47 @@ public class AzureOpenAiRecorder {
                 }
             };
         }
+    }
+
+    static Optional<Proxy> resolveProxy(LangChain4jAzureOpenAiConfig.AzureAiConfig azureAiConfig,
+            ProxyConfigurationRegistry proxyRegistry) {
+
+        if (azureAiConfig.proxyConfigurationName().isPresent()) {
+            String configName = azureAiConfig.proxyConfigurationName().get();
+
+            if (azureAiConfig.proxyHost().isPresent()) {
+                log.warnf("Both 'proxy-configuration-name' (%s) and 'proxy-host' (%s) are set. " +
+                        "The 'proxy-host' configuration will be ignored. " +
+                        "Please remove 'proxy-host' and 'proxy-port' from your configuration.",
+                        configName, azureAiConfig.proxyHost().get());
+            }
+
+            return proxyRegistry.get(azureAiConfig.proxyConfigurationName())
+                    .map(new Function<ProxyConfiguration, Proxy>() {
+                        @Override
+                        public Proxy apply(ProxyConfiguration pc) {
+                            return new Proxy(
+                                    Type.valueOf(pc.type().name()),
+                                    new InetSocketAddress(pc.host(), pc.port()));
+                        }
+                    });
+        }
+
+        if (azureAiConfig.proxyHost().isPresent()) {
+            return Optional.of(new Proxy(
+                    Type.valueOf(azureAiConfig.proxyType()),
+                    new InetSocketAddress(azureAiConfig.proxyHost().get(), azureAiConfig.proxyPort())));
+        }
+
+        return proxyRegistry.get(Optional.empty())
+                .map(new Function<ProxyConfiguration, Proxy>() {
+                    @Override
+                    public Proxy apply(ProxyConfiguration pc) {
+                        return new Proxy(
+                                Type.valueOf(pc.type().name()),
+                                new InetSocketAddress(pc.host(), pc.port()));
+                    }
+                });
     }
 
     static String getEndpoint(LangChain4jAzureOpenAiConfig.AzureAiConfig azureAiConfig, String configName, EndpointType type) {

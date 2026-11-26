@@ -4,6 +4,7 @@ import static dev.langchain4j.internal.RetryUtils.withRetry;
 import static dev.langchain4j.internal.ValidationUtils.ensureNotBlank;
 import static io.quarkiverse.langchain4j.azure.openai.Consts.DEFAULT_USER_AGENT;
 
+import java.net.Proxy;
 import java.time.Duration;
 import java.util.concurrent.Callable;
 
@@ -26,6 +27,13 @@ public class AzureOpenAiAudioTranscriptionModel implements AudioTranscriptionMod
     public AzureOpenAiAudioTranscriptionModel(String endpoint, String apiKey, String adToken, String apiVersion,
             String modelName, Duration timeout, Integer maxRetries, Boolean logRequests, Boolean logResponses,
             Boolean logCurl, String configName) {
+        this(endpoint, apiKey, adToken, apiVersion, modelName, timeout, maxRetries, null, null, logRequests, logResponses,
+                logCurl, configName);
+    }
+
+    public AzureOpenAiAudioTranscriptionModel(String endpoint, String apiKey, String adToken, String apiVersion,
+            String modelName, Duration timeout, Integer maxRetries, Proxy proxy, String tlsConfigurationName,
+            Boolean logRequests, Boolean logResponses, Boolean logCurl, String configName) {
         this.modelName = modelName;
         this.maxRetries = maxRetries;
 
@@ -36,6 +44,8 @@ public class AzureOpenAiAudioTranscriptionModel implements AudioTranscriptionMod
                 .connectTimeout(timeout)
                 .readTimeout(timeout)
                 .writeTimeout(timeout)
+                .proxy(proxy)
+                .tlsConfigurationName(tlsConfigurationName)
                 .logRequests(logRequests)
                 .logResponses(logResponses)
                 .logCurl(logCurl != null && logCurl)
@@ -73,6 +83,8 @@ public class AzureOpenAiAudioTranscriptionModel implements AudioTranscriptionMod
         private String modelName;
         private Duration timeout;
         private Integer maxRetries;
+        private Proxy proxy;
+        private String tlsConfigurationName;
         private Boolean logRequests;
         private Boolean logResponses;
         private Boolean logCurl;
@@ -113,6 +125,22 @@ public class AzureOpenAiAudioTranscriptionModel implements AudioTranscriptionMod
             return this;
         }
 
+        public Builder proxy(Proxy proxy) {
+            this.proxy = proxy;
+            return this;
+        }
+
+        /**
+         * Sets the name of the TLS configuration, from the Quarkus TLS registry, to use for the connection.
+         *
+         * @param tlsConfigurationName The name of the TLS configuration.
+         * @return builder
+         */
+        public Builder tlsConfigurationName(String tlsConfigurationName) {
+            this.tlsConfigurationName = tlsConfigurationName;
+            return this;
+        }
+
         public Builder logRequests(Boolean logRequests) {
             this.logRequests = logRequests;
             return this;
@@ -135,7 +163,7 @@ public class AzureOpenAiAudioTranscriptionModel implements AudioTranscriptionMod
 
         public AzureOpenAiAudioTranscriptionModel build() {
             return new AzureOpenAiAudioTranscriptionModel(endpoint, apiKey, adToken, apiVersion, modelName, timeout,
-                    maxRetries, logRequests, logResponses, logCurl, configName);
+                    maxRetries, proxy, tlsConfigurationName, logRequests, logResponses, logCurl, configName);
         }
     }
 

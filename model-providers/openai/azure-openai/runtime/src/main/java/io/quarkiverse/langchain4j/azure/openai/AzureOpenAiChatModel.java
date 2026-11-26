@@ -92,6 +92,7 @@ public class AzureOpenAiChatModel implements ChatModel {
             Duration timeout,
             Integer maxRetries,
             Proxy proxy,
+            String tlsConfigurationName,
             String responseFormat,
             Boolean logRequests,
             Boolean logResponses,
@@ -111,6 +112,7 @@ public class AzureOpenAiChatModel implements ChatModel {
                 .readTimeout(timeout)
                 .writeTimeout(timeout)
                 .proxy(proxy)
+                .tlsConfigurationName(tlsConfigurationName)
                 .logRequests(logRequests)
                 .logResponses(logResponses)
                 .logCurl(logCurl != null && logCurl)
@@ -262,6 +264,7 @@ public class AzureOpenAiChatModel implements ChatModel {
         private Duration timeout;
         private Integer maxRetries;
         private Proxy proxy;
+        private String tlsConfigurationName;
         private String responseFormat;
         private Boolean logRequests;
         private Boolean logResponses;
@@ -373,6 +376,17 @@ public class AzureOpenAiChatModel implements ChatModel {
             return this;
         }
 
+        /**
+         * Sets the name of the TLS configuration, from the Quarkus TLS registry, to use for the connection.
+         *
+         * @param tlsConfigurationName The name of the TLS configuration.
+         * @return builder
+         */
+        public Builder tlsConfigurationName(String tlsConfigurationName) {
+            this.tlsConfigurationName = tlsConfigurationName;
+            return this;
+        }
+
         public Builder responseFormat(String responseFormat) {
             this.responseFormat = responseFormat;
             return this;
@@ -415,6 +429,7 @@ public class AzureOpenAiChatModel implements ChatModel {
                     timeout,
                     maxRetries,
                     proxy,
+                    tlsConfigurationName,
                     responseFormat,
                     logRequests,
                     logResponses,

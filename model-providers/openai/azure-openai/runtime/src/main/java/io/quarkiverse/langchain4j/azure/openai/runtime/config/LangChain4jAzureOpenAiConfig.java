@@ -166,21 +166,49 @@ public interface LangChain4jAzureOpenAiConfig {
         Boolean enableIntegration();
 
         /**
+         * If set, the named TLS configuration with the configured name will be applied to the REST Client
+         */
+        Optional<String> tlsConfigurationName();
+
+        /**
          * The Proxy type
+         * <p>
+         * Ignored when {@code quarkus.langchain4j.azure-openai.proxy-configuration-name} is set.
          */
         @WithDefault("HTTP")
         String proxyType();
 
         /**
          * The Proxy host
+         * <p>
+         * Ignored when {@code quarkus.langchain4j.azure-openai.proxy-configuration-name} is set.
          */
         Optional<String> proxyHost();
 
         /**
          * The Proxy port
+         * <p>
+         * Ignored when {@code quarkus.langchain4j.azure-openai.proxy-configuration-name} is set.
          */
         @WithDefault("3128")
         Integer proxyPort();
+
+        /**
+         * Proxy configuration name.
+         * <p>
+         * There are some rules for using Quarkus Proxy Registry configuration:
+         * <ul>
+         * <li>If {@code quarkus.langchain4j.azure-openai.proxy-configuration-name} is set, it takes precedence over
+         * <code>proxy-host</code>
+         * configuration.</li>
+         * <li>If neither is set and the default proxy configuration is configured ({@code quarkus.proxy.*}) then that will
+         * be used.</li>
+         * <li>If the proxy configuration name is set, the configuration from {@code quarkus.proxy.<name>.*} will be used.</li>
+         * <li>If the proxy configuration name is set, but no proxy configuration is found with that name, then an error will be
+         * thrown at runtime.</li>
+         * </ul>
+         */
+        Optional<String> proxyConfigurationName();
 
         /**
          * Chat model related settings

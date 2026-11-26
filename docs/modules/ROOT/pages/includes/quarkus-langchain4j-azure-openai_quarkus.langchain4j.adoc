@@ -420,6 +420,27 @@ endif::add-copy-button-to-env-var[]
 |boolean
 |`+++true+++`
 
+a| [[quarkus-langchain4j-azure-openai_quarkus-langchain4j-azure-openai-tls-configuration-name]] [.property-path]##link:#quarkus-langchain4j-azure-openai_quarkus-langchain4j-azure-openai-tls-configuration-name[`+++quarkus.langchain4j.azure-openai.tls-configuration-name+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.langchain4j.azure-openai.tls-configuration-name+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+If set, the named TLS configuration with the configured name will be applied to the REST Client
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_LANGCHAIN4J_AZURE_OPENAI_TLS_CONFIGURATION_NAME+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_LANGCHAIN4J_AZURE_OPENAI_TLS_CONFIGURATION_NAME+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
 a| [[quarkus-langchain4j-azure-openai_quarkus-langchain4j-azure-openai-proxy-type]] [.property-path]##link:#quarkus-langchain4j-azure-openai_quarkus-langchain4j-azure-openai-proxy-type[`+++quarkus.langchain4j.azure-openai.proxy-type+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++quarkus.langchain4j.azure-openai.proxy-type+++[]
@@ -429,6 +450,8 @@ endif::add-copy-button-to-config-props[]
 [.description]
 --
 The Proxy type
+
+Ignored when `quarkus.langchain4j.azure-openai.proxy-configuration-name` is set.
 
 
 ifdef::add-copy-button-to-env-var[]
@@ -451,6 +474,8 @@ endif::add-copy-button-to-config-props[]
 --
 The Proxy host
 
+Ignored when `quarkus.langchain4j.azure-openai.proxy-configuration-name` is set.
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++QUARKUS_LANGCHAIN4J_AZURE_OPENAI_PROXY_HOST+++[]
@@ -472,6 +497,8 @@ endif::add-copy-button-to-config-props[]
 --
 The Proxy port
 
+Ignored when `quarkus.langchain4j.azure-openai.proxy-configuration-name` is set.
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++QUARKUS_LANGCHAIN4J_AZURE_OPENAI_PROXY_PORT+++[]
@@ -482,6 +509,34 @@ endif::add-copy-button-to-env-var[]
 --
 |int
 |`+++3128+++`
+
+a| [[quarkus-langchain4j-azure-openai_quarkus-langchain4j-azure-openai-proxy-configuration-name]] [.property-path]##link:#quarkus-langchain4j-azure-openai_quarkus-langchain4j-azure-openai-proxy-configuration-name[`+++quarkus.langchain4j.azure-openai.proxy-configuration-name+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.langchain4j.azure-openai.proxy-configuration-name+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Proxy configuration name.
+
+There are some rules for using Quarkus Proxy Registry configuration:
+
+ * If `quarkus.langchain4j.azure-openai.proxy-configuration-name` is set, it takes precedence over `proxy-host` configuration.
+ * If neither is set and the default proxy configuration is configured (`quarkus.proxy.++*++`) then that will be used.
+ * If the proxy configuration name is set, the configuration from `quarkus.proxy.<name>.++*++` will be used.
+ * If the proxy configuration name is set, but no proxy configuration is found with that name, then an error will be thrown at runtime.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_LANGCHAIN4J_AZURE_OPENAI_PROXY_CONFIGURATION_NAME+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_LANGCHAIN4J_AZURE_OPENAI_PROXY_CONFIGURATION_NAME+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
 
 a| [[quarkus-langchain4j-azure-openai_quarkus-langchain4j-azure-openai-chat-model-resource-name]] [.property-path]##link:#quarkus-langchain4j-azure-openai_quarkus-langchain4j-azure-openai-chat-model-resource-name[`+++quarkus.langchain4j.azure-openai.chat-model.resource-name+++`]##
 ifdef::add-copy-button-to-config-props[]
@@ -1903,6 +1958,27 @@ endif::add-copy-button-to-env-var[]
 |boolean
 |`+++true+++`
 
+a| [[quarkus-langchain4j-azure-openai_quarkus-langchain4j-azure-openai-model-name-tls-configuration-name]] [.property-path]##link:#quarkus-langchain4j-azure-openai_quarkus-langchain4j-azure-openai-model-name-tls-configuration-name[`+++quarkus.langchain4j.azure-openai."model-name".tls-configuration-name+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.langchain4j.azure-openai."model-name".tls-configuration-name+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+If set, the named TLS configuration with the configured name will be applied to the REST Client
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_LANGCHAIN4J_AZURE_OPENAI__MODEL_NAME__TLS_CONFIGURATION_NAME+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_LANGCHAIN4J_AZURE_OPENAI__MODEL_NAME__TLS_CONFIGURATION_NAME+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
 a| [[quarkus-langchain4j-azure-openai_quarkus-langchain4j-azure-openai-model-name-proxy-type]] [.property-path]##link:#quarkus-langchain4j-azure-openai_quarkus-langchain4j-azure-openai-model-name-proxy-type[`+++quarkus.langchain4j.azure-openai."model-name".proxy-type+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++quarkus.langchain4j.azure-openai."model-name".proxy-type+++[]
@@ -1912,6 +1988,8 @@ endif::add-copy-button-to-config-props[]
 [.description]
 --
 The Proxy type
+
+Ignored when `quarkus.langchain4j.azure-openai.proxy-configuration-name` is set.
 
 
 ifdef::add-copy-button-to-env-var[]
@@ -1934,6 +2012,8 @@ endif::add-copy-button-to-config-props[]
 --
 The Proxy host
 
+Ignored when `quarkus.langchain4j.azure-openai.proxy-configuration-name` is set.
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++QUARKUS_LANGCHAIN4J_AZURE_OPENAI__MODEL_NAME__PROXY_HOST+++[]
@@ -1955,6 +2035,8 @@ endif::add-copy-button-to-config-props[]
 --
 The Proxy port
 
+Ignored when `quarkus.langchain4j.azure-openai.proxy-configuration-name` is set.
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++QUARKUS_LANGCHAIN4J_AZURE_OPENAI__MODEL_NAME__PROXY_PORT+++[]
@@ -1965,6 +2047,34 @@ endif::add-copy-button-to-env-var[]
 --
 |int
 |`+++3128+++`
+
+a| [[quarkus-langchain4j-azure-openai_quarkus-langchain4j-azure-openai-model-name-proxy-configuration-name]] [.property-path]##link:#quarkus-langchain4j-azure-openai_quarkus-langchain4j-azure-openai-model-name-proxy-configuration-name[`+++quarkus.langchain4j.azure-openai."model-name".proxy-configuration-name+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.langchain4j.azure-openai."model-name".proxy-configuration-name+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Proxy configuration name.
+
+There are some rules for using Quarkus Proxy Registry configuration:
+
+ * If `quarkus.langchain4j.azure-openai.proxy-configuration-name` is set, it takes precedence over `proxy-host` configuration.
+ * If neither is set and the default proxy configuration is configured (`quarkus.proxy.++*++`) then that will be used.
+ * If the proxy configuration name is set, the configuration from `quarkus.proxy.<name>.++*++` will be used.
+ * If the proxy configuration name is set, but no proxy configuration is found with that name, then an error will be thrown at runtime.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_LANGCHAIN4J_AZURE_OPENAI__MODEL_NAME__PROXY_CONFIGURATION_NAME+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_LANGCHAIN4J_AZURE_OPENAI__MODEL_NAME__PROXY_CONFIGURATION_NAME+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
 
 a| [[quarkus-langchain4j-azure-openai_quarkus-langchain4j-azure-openai-model-name-chat-model-resource-name]] [.property-path]##link:#quarkus-langchain4j-azure-openai_quarkus-langchain4j-azure-openai-model-name-chat-model-resource-name[`+++quarkus.langchain4j.azure-openai."model-name".chat-model.resource-name+++`]##
 ifdef::add-copy-button-to-config-props[]

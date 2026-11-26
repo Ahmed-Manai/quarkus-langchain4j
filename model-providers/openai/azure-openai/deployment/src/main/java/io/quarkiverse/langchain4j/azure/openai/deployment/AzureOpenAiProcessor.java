@@ -42,6 +42,7 @@ import io.quarkus.deployment.annotations.ExecutionTime;
 import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.ShutdownContextBuildItem;
+import io.quarkus.proxy.ProxyConfigurationRegistry;
 
 public class AzureOpenAiProcessor {
 
@@ -115,6 +116,7 @@ public class AzureOpenAiProcessor {
                                 new Type[] { ParameterizedType.create(DotNames.MODEL_BUILDER_CUSTOMIZER,
                                         new Type[] { ClassType.create(AZURE_OPENAI_CHAT_MODEL_BUILDER) }, null) },
                                 null), ANY)
+                        .addInjectionPoint(Type.create(ProxyConfigurationRegistry.class))
                         .createWith(chatModel);
                 addQualifierIfNecessary(chatBuilder, configName);
                 beanProducer.produce(chatBuilder.done());
@@ -134,6 +136,7 @@ public class AzureOpenAiProcessor {
                                         new Type[] { ClassType.create(AZURE_OPENAI_STREAMING_CHAT_MODEL_BUILDER) },
                                         null) },
                                 null), ANY)
+                        .addInjectionPoint(Type.create(ProxyConfigurationRegistry.class))
                         .createWith(streamingChatModel);
                 addQualifierIfNecessary(streamingBuilder, configName);
                 beanProducer.produce(streamingBuilder.done());
@@ -157,6 +160,7 @@ public class AzureOpenAiProcessor {
                                 new Type[] { ParameterizedType.create(DotNames.MODEL_BUILDER_CUSTOMIZER,
                                         new Type[] { ClassType.create(AZURE_OPENAI_EMBEDDING_MODEL_BUILDER) }, null) },
                                 null), ANY)
+                        .addInjectionPoint(Type.create(ProxyConfigurationRegistry.class))
                         .createWith(embeddingModel);
                 addQualifierIfNecessary(builder, configName);
                 beanProducer.produce(builder.done());
@@ -179,6 +183,7 @@ public class AzureOpenAiProcessor {
                                 new Type[] { ParameterizedType.create(DotNames.MODEL_BUILDER_CUSTOMIZER,
                                         new Type[] { ClassType.create(AZURE_OPENAI_IMAGE_MODEL_BUILDER) }, null) },
                                 null), ANY)
+                        .addInjectionPoint(Type.create(ProxyConfigurationRegistry.class))
                         .createWith(imageModel);
                 addQualifierIfNecessary(builder, configName);
                 beanProducer.produce(builder.done());
@@ -202,6 +207,7 @@ public class AzureOpenAiProcessor {
                                         new Type[] { ClassType.create(AZURE_OPENAI_AUDIO_TRANSCRIPTION_MODEL_BUILDER) },
                                         null) },
                                 null), ANY)
+                        .addInjectionPoint(Type.create(ProxyConfigurationRegistry.class))
                         .createWith(audioTranscriptionModel);
                 addQualifierIfNecessary(builder, configName);
                 beanProducer.produce(builder.done());

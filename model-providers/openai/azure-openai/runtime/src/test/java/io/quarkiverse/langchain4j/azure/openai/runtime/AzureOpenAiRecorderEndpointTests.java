@@ -285,6 +285,11 @@ class AzureOpenAiRecorderEndpointTests {
         }
 
         @Override
+        public Optional<String> tlsConfigurationName() {
+            return Optional.empty();
+        }
+
+        @Override
         public String proxyType() {
             return "HTTP";
         }
@@ -297,6 +302,11 @@ class AzureOpenAiRecorderEndpointTests {
         @Override
         public Integer proxyPort() {
             return 0;
+        }
+
+        @Override
+        public Optional<String> proxyConfigurationName() {
+            return Optional.empty();
         }
 
         @Override

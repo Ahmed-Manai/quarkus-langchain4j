@@ -90,6 +90,7 @@ public class AzureOpenAiStreamingChatModel implements StreamingChatModel {
             Double frequencyPenalty,
             Duration timeout,
             Proxy proxy,
+            String tlsConfigurationName,
             String responseFormat,
             Boolean logRequests,
             Boolean logResponses,
@@ -109,6 +110,7 @@ public class AzureOpenAiStreamingChatModel implements StreamingChatModel {
                 .readTimeout(timeout)
                 .writeTimeout(timeout)
                 .proxy(proxy)
+                .tlsConfigurationName(tlsConfigurationName)
                 .logRequests(logRequests)
                 .logStreamingResponses(logResponses)
                 .logCurl(logCurl != null && logCurl)
@@ -281,6 +283,7 @@ public class AzureOpenAiStreamingChatModel implements StreamingChatModel {
         private Double frequencyPenalty;
         private Duration timeout;
         private Proxy proxy;
+        private String tlsConfigurationName;
         private String responseFormat;
         private Boolean logRequests;
         private Boolean logResponses;
@@ -377,6 +380,17 @@ public class AzureOpenAiStreamingChatModel implements StreamingChatModel {
             return this;
         }
 
+        /**
+         * Sets the name of the TLS configuration, from the Quarkus TLS registry, to use for the connection.
+         *
+         * @param tlsConfigurationName The name of the TLS configuration.
+         * @return builder
+         */
+        public Builder tlsConfigurationName(String tlsConfigurationName) {
+            this.tlsConfigurationName = tlsConfigurationName;
+            return this;
+        }
+
         public Builder responseFormat(String responseFormat) {
             this.responseFormat = responseFormat;
             return this;
@@ -422,6 +436,7 @@ public class AzureOpenAiStreamingChatModel implements StreamingChatModel {
                     frequencyPenalty,
                     timeout,
                     proxy,
+                    tlsConfigurationName,
                     responseFormat,
                     logRequests,
                     logResponses,

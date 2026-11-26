@@ -7,6 +7,7 @@ import static io.quarkiverse.langchain4j.azure.openai.Consts.DEFAULT_USER_AGENT;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.net.Proxy;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,6 +46,14 @@ public class AzureOpenAiImageModel implements ImageModel {
             String size, String quality, Optional<String> user, Duration timeout,
             Integer maxRetries, Boolean logRequests, Boolean logResponses, Boolean logCurl,
             Optional<Path> persistDirectory, String configName) {
+        this(endpoint, apiKey, adToken, apiVersion, modelName, size, quality, user, timeout, maxRetries, null, null,
+                logRequests, logResponses, logCurl, persistDirectory, configName);
+    }
+
+    public AzureOpenAiImageModel(String endpoint, String apiKey, String adToken, String apiVersion, String modelName,
+            String size, String quality, Optional<String> user, Duration timeout,
+            Integer maxRetries, Proxy proxy, String tlsConfigurationName, Boolean logRequests, Boolean logResponses,
+            Boolean logCurl, Optional<Path> persistDirectory, String configName) {
         this.modelName = modelName;
         this.size = size;
         this.quality = quality;
@@ -59,6 +68,8 @@ public class AzureOpenAiImageModel implements ImageModel {
                 .connectTimeout(timeout)
                 .readTimeout(timeout)
                 .writeTimeout(timeout)
+                .proxy(proxy)
+                .tlsConfigurationName(tlsConfigurationName)
                 .logRequests(logRequests)
                 .logResponses(logResponses)
                 .logCurl(logCurl != null && logCurl)
@@ -146,6 +157,8 @@ public class AzureOpenAiImageModel implements ImageModel {
         private Optional<String> user;
         private Duration timeout;
         private Integer maxRetries;
+        private Proxy proxy;
+        private String tlsConfigurationName;
         private Boolean logRequests;
         private Boolean logResponses;
         private Boolean logCurl;
@@ -179,6 +192,22 @@ public class AzureOpenAiImageModel implements ImageModel {
 
         public Builder maxRetries(Integer maxRetries) {
             this.maxRetries = maxRetries;
+            return this;
+        }
+
+        public Builder proxy(Proxy proxy) {
+            this.proxy = proxy;
+            return this;
+        }
+
+        /**
+         * Sets the name of the TLS configuration, from the Quarkus TLS registry, to use for the connection.
+         *
+         * @param tlsConfigurationName The name of the TLS configuration.
+         * @return builder
+         */
+        public Builder tlsConfigurationName(String tlsConfigurationName) {
+            this.tlsConfigurationName = tlsConfigurationName;
             return this;
         }
 
@@ -229,7 +258,7 @@ public class AzureOpenAiImageModel implements ImageModel {
 
         public AzureOpenAiImageModel build() {
             return new AzureOpenAiImageModel(endpoint, apiKey, adToken, apiVersion, modelName, size, quality, user,
-                    timeout, maxRetries, logRequests, logResponses, logCurl,
+                    timeout, maxRetries, proxy, tlsConfigurationName, logRequests, logResponses, logCurl,
                     persistDirectory, configName);
         }
     }
