@@ -59,7 +59,7 @@ class DefaultCommittableChatMemory implements CommittableChatMemory {
         return messages.stream()
                 .filter(message -> message instanceof SystemMessage)
                 .map(message -> (SystemMessage) message)
-                .findAny();
+                .findFirst();
     }
 
     @Override

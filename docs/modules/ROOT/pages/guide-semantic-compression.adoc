@@ -72,16 +72,19 @@ This class:
 
 * Uses an `InMemoryChatMemoryStore` delegate - this is a simple in-memory store that holds chat messages.
 * Reads a `threshold` from configuration (kept low for demonstration purposes).
-* Retains or creates a system message with a summary - this is the most complex part.
-* Replaces the history with the updated system message when compression is triggered
+* Keeps the system message of the AI service unchanged, and stores the summary in a second system message.
+* Replaces the history with these two system messages when compression is triggered.
 
 So, in other words, when the chat history exceeds the configured threshold:
 
-1. It checks if there is a system message already present.
-2. If it does, it checks if that system message already contains a summary, and extracts it if it does.
-3. Build a textual representation of the chat history, including the "fake" system message containing the previous summary if any.
-4. Sends the chat history to the LLM for summarization.
-5. Replaces the system message with the new summary and store this as the history.
+1. It keeps the system message of the AI service, if there is one.
+2. It builds a textual representation of the chat history, starting with the previous summary if there is one.
+3. It sends this text to the LLM for summarization.
+4. It stores the system message of the AI service, followed by a system message holding the new summary, as the history.
+
+IMPORTANT: Do not add the summary to the system message of the AI service.
+The AI service adds its system message to the memory on each call, and replaces the first system message of the memory when it is different.
+A system message containing the summary would be replaced before the next request, and the summary would never reach the model.
 
 As you can also see, we do not trigger compressions if the last message is a system message, or if the last message is involved in a function call.
 It would corrupt the history.
@@ -164,19 +167,17 @@ We are now at the point where the chat history exceeds the configured threshold,
 3) After the third request, the chat history is summarized:
 
 * *System:* You are a polite and helpful assistant.
-
-    Context: The following is a summary of the previous conversation:
+* *System:* Context: The following is a summary of the previous conversation:
     Bob is seeking assistance in planning his trip to Athens, Greece, starting with transportation options. He inquired about available flights from Lyon to Athens, and the assistant advised him to check travel websites, providing general information on airlines, flight duration, frequency, booking tips, and airport transfers. Clement found a specific flight on Air France for August 15th and asked about transportation options from the Athens airport to the city center.
 
 * *Assistant:* Great choice! Air France is a reliable airline, and it seems like you’ve found a convenient flight. Once you arrive in Athens, there are several transportation options to get to the city center from Athens International Airport (Eleftherios Venizelos) ...
 
-So our chat history now contains the system message with the summary, and the Assistant's response to the last user question.
+So our chat history now contains the system message of the AI service and the summary, which also covers the Assistant's response to the last user question.
 
 4) After the fourth request, the chat history is still summarized, and the summary is used in the next request:
 
 * *System:* You are a polite and helpful assistant.
-
-    Context: The following is a summary of the previous conversation:
+* *System:* Context: The following is a summary of the previous conversation:
     ...
 
 * *Assistant:* Great choice! Air France is a reliable airline, and it seems like you’ve found a convenient flight. Once you arrive in Athens, there are several transportation options to get to the city center from Athens International Airport (Eleftherios Venizelos) ...

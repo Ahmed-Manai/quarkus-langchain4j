@@ -38,10 +38,10 @@ public class CompressingChatMemoryStore implements ChatMemoryStore {
     private final int threshold;
 
     /**
-     * The prefix used to identify the summary in the system message.
-     * This is used to ensure that we can extract and update the summary correctly.
+     * The prefix of the system message holding the summary.
+     * This is used to tell the summary apart from the system message of the AI service.
      */
-    private static final String SUMMARY_PREFIX = "Context: The following is a summary of the previous conversation:";
+    public static final String SUMMARY_PREFIX = "Context: The following is a summary of the previous conversation:";
 
     public CompressingChatMemoryStore(ChatModel model, // We use the default chat model, but you can select any chat model
             @ConfigProperty(name = "semantic-compression-threshold", defaultValue = "5") int threshold) {
@@ -77,30 +77,25 @@ public class CompressingChatMemoryStore implements ChatMemoryStore {
             Log.infof("Triggering semantic compression for memory ID: %s with %d messages", memoryId, messages.size());
             List<ChatMessage> compressed = new ArrayList<>();
 
-            // Retain the first system message if present
-            SystemMessage systemMsg = (SystemMessage) messages.stream()
-                    .filter(m -> m.type() == ChatMessageType.SYSTEM)
-                    .findFirst().orElse(null);
+            // Keep the system message of the AI service unchanged, in the first position.
+            // The AI service adds its system message on each call, and replaces the first system message of the memory
+            // if it is different, so the summary must not be part of it.
+            messages.stream()
+                    .filter(m -> m instanceof SystemMessage systemMessage && !isSummary(systemMessage))
+                    .findFirst()
+                    .ifPresent(compressed::add);
 
-            // Collect messages since last compression and extract any existing summary
-            for (ChatMessage msg : messages) {
-                if (msg.type() == ChatMessageType.SYSTEM) {
-                    // We found a system message, we need to check if it contains a previous summary
-                    extractSummaryFromSystemMessageIfAny((SystemMessage) msg, compressed);
-                } else {
-                    compressed.add(msg);
-                }
-            }
-            // compressed now contains a "fake" system message with the previous summary if it existed, and all other messages.
-
-            // Build compression prompt
+            // Build compression prompt, including the previous summary if any
             StringBuilder sb = new StringBuilder(
                     "Summarize the following dialogue into a brief summary, preserving context and tone:\n\n");
             for (ChatMessage msg : messages) {
                 switch (msg.type()) {
-                    case SYSTEM ->
-                        // This is the previous summary
-                        sb.append("Context: ").append(((SystemMessage) msg).text()).append("\n");
+                    case SYSTEM -> {
+                        if (isSummary((SystemMessage) msg)) {
+                            sb.append("Context: ").append(extractSummary((SystemMessage) msg)).append("\n");
+                        }
+                        // The system message of the AI service is not part of the dialogue
+                    }
                     case USER -> sb.append("User: ").append(((UserMessage) msg).singleText()).append("\n");
                     case AI -> sb.append("Assistant: ").append(((AiMessage) msg).text()).append("\n");
                     default -> {
@@ -109,53 +104,23 @@ public class CompressingChatMemoryStore implements ChatMemoryStore {
                 }
             }
             String summary = chatModel.chat(sb.toString());
-            systemMsg = appendSummaryToSystemMessage(systemMsg, summary);
-            Log.infof("Generated system message with summary: %s", systemMsg.text());
-            delegate.updateMessages(memoryId, List.of(systemMsg));
+
+            // Store the summary in its own system message, after the system message of the AI service
+            SystemMessage summaryMessage = SystemMessage.systemMessage(SUMMARY_PREFIX + "\n" + summary);
+            Log.infof("Generated summary: %s", summaryMessage.text());
+            compressed.add(summaryMessage);
+            delegate.updateMessages(memoryId, compressed);
         } else {
             delegate.updateMessages(memoryId, messages);
         }
     }
 
-    private SystemMessage appendSummaryToSystemMessage(SystemMessage systemMsg, String summary) {
-        if (systemMsg == null) {
-            // If no system message exists, create a new one with the summary
-            return SystemMessage.systemMessage(SUMMARY_PREFIX + "\n" + summary);
-        }
-        // Check if the system message already contains a summary
-        String content = systemMsg.text();
-        if (content.contains(SUMMARY_PREFIX)) {
-            // Replace the existing summary with the new one
-            int startIndex = content.indexOf(SUMMARY_PREFIX) + SUMMARY_PREFIX.length();
-            String newContent = content.substring(0, startIndex) + "\n\n";
-            newContent = newContent + "\n\n" + SUMMARY_PREFIX + "\n" + summary;
-            return SystemMessage.systemMessage(newContent);
-        } else {
-            // If no summary exists, append the new summary
-            String newContent = content + "\n\n" + SUMMARY_PREFIX + "\n" + summary;
-            return SystemMessage.systemMessage(newContent);
-        }
+    private static boolean isSummary(SystemMessage systemMsg) {
+        return systemMsg.text().startsWith(SUMMARY_PREFIX);
     }
 
-    private void extractSummaryFromSystemMessageIfAny(SystemMessage systemMsg, List<ChatMessage> compressed) {
-        String content = systemMsg.text();
-        if (content.contains(SUMMARY_PREFIX)) {
-            // Extract the summary part
-            int startIndex = content.indexOf(SUMMARY_PREFIX) + SUMMARY_PREFIX.length();
-            String summary = content.substring(startIndex).trim();
-            // Add the sanitized summary to the compressed messages
-            compressed.add(SystemMessage.systemMessage(sanitize(summary)));
-        }
-        // Otherwise, do nothing, as we don't want to include the system message in the compressed messages.
-    }
-
-    private String sanitize(String text) {
-        // Remove the previous summary if it exists
-        int index = text.indexOf("Context: The following is a summary of the previous conversation:");
-        if (index != -1) {
-            return text.substring(0, index).trim();
-        }
-        return text.trim();
+    private static String extractSummary(SystemMessage summaryMsg) {
+        return summaryMsg.text().substring(SUMMARY_PREFIX.length()).trim();
     }
 
     @Override

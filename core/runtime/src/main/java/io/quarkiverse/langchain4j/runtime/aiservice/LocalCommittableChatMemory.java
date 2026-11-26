@@ -31,7 +31,7 @@ class LocalCommittableChatMemory implements CommittableChatMemory {
             Optional<SystemMessage> existing = messages.stream()
                     .filter(m -> m instanceof SystemMessage)
                     .map(m -> (SystemMessage) m)
-                    .findAny();
+                    .findFirst();
             if (existing.isPresent()) {
                 if (existing.get().equals(message)) {
                     return;
