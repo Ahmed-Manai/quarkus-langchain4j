@@ -94,6 +94,24 @@ public class AzureOpenAiEmbeddingModel implements EmbeddingModel {
             String configName,
             String modelName,
             String user) {
+        this(endpoint, apiVersion, apiKey, adToken, tokenizer, timeout, maxRetries, proxy, logRequests, logResponses,
+                null, configName, modelName, user);
+    }
+
+    public AzureOpenAiEmbeddingModel(String endpoint,
+            String apiVersion,
+            String apiKey,
+            String adToken,
+            TokenCountEstimator tokenizer,
+            Duration timeout,
+            Integer maxRetries,
+            Proxy proxy,
+            Boolean logRequests,
+            Boolean logResponses,
+            Boolean logCurl,
+            String configName,
+            String modelName,
+            String user) {
 
         // v1 endpoints are not versioned and have no deployment in the URL, so the deployment is selected through the model
         this.requestModel = apiVersion == null ? modelName : null;
@@ -112,6 +130,7 @@ public class AzureOpenAiEmbeddingModel implements EmbeddingModel {
                 .proxy(proxy)
                 .logRequests(logRequests)
                 .logResponses(logResponses)
+                .logCurl(logCurl != null && logCurl)
                 .userAgent(DEFAULT_USER_AGENT)
                 .azureAdToken(adToken)
                 .azureApiKey(apiKey)
@@ -184,6 +203,7 @@ public class AzureOpenAiEmbeddingModel implements EmbeddingModel {
         private Proxy proxy;
         private Boolean logRequests;
         private Boolean logResponses;
+        private Boolean logCurl;
         private String adToken;
         private String configName;
         private String modelName;
@@ -258,6 +278,11 @@ public class AzureOpenAiEmbeddingModel implements EmbeddingModel {
             return this;
         }
 
+        public Builder logCurl(Boolean logCurl) {
+            this.logCurl = logCurl;
+            return this;
+        }
+
         public Builder configName(String configName) {
             this.configName = configName;
             return this;
@@ -297,6 +322,7 @@ public class AzureOpenAiEmbeddingModel implements EmbeddingModel {
                     proxy,
                     logRequests,
                     logResponses,
+                    logCurl,
                     configName,
                     modelName,
                     user);
